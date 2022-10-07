@@ -16,8 +16,6 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void draw();
-void tick();
 void fullscreen();
 int init();
 bool fscreen = true;
@@ -42,19 +40,26 @@ float scr_height = SCR_HEIGHT;
 glm::mat4 projection;
 glm::mat4 altProjection;
 
+//main method
 int main()
 {
+    //if the program does not initialise properly close it
     int i = init();
     if (i != 0) {
         return -1;
     }
+    //enable blending
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    //init shaders
     ShaderManager sm;
     sm = ShaderManager();
     sm.initShader("texShader", "res/vertex.vs", "res/frag.fs");
     sm.initShader("screenShader", "res/FBOvert.vs", "res/FBOfrag.fs");
     sm.initShader("fontShader", "res/fontVertex.vs", "res/fontFrag.fs");
+
+    //init textures
     TextureManager tm;
     tm = TextureManager();
     tm.initTex("res/homeBackground.png", "background", false);
@@ -63,26 +68,34 @@ int main()
     tm.initTex("res/colourCircle.png", "colourCircle", true);
     tm.initTex("res/SquishyMouth.png", "squishyMouth", true);
 
+    //projection matrix
     glm::mat4 projection = glm::mat4(1.0f);
     projection = glm::ortho(0.f, scr_width, scr_height, 0.f, -1.0f, 1.0f);
-    altProjection = glm::perspective(glm::radians(45.0f), scr_width / scr_height, 0.1f, 100.0f);
 
+    //font for text rendering
     Font font(projection, "res/Amatic-Bold.ttf", 5, sm.getShader("fontShader"));
+
+    //Texture renderer
     TextureRenderer texRender(sm.getShader("texShader"), font);
+    //Tile renderer never used (Planned to be used for other levels in the game)
     TileRenderer tileRender(sm.getShader("texShader"));
+
+    //input
     MouseInput mInput(window, SCR_WIDTH, SCR_HEIGHT);
-    KeyInput keyInput(window, SCR_WIDTH, SCR_HEIGHT);
+    KeyInput keyInput(window);
 
+    //Frame buffer
     FrameBuffer f(SCR_WIDTH, SCR_HEIGHT);
-    Squishy s(glm::vec2(scr_width / 2.f, scr_height / 2 - 128.f), glm::vec2(256, 256), 96, mInput, 0);
 
+    //Squishy object, falls into screen from the sky
+    Squishy s(glm::vec2(scr_width / 2.f, 128.f), glm::vec2(256, 256), 96, mInput, 0);
+
+    //create the level manager, and give it the correct static Mouse Input value
     LevelManager::mInput = mInput;
     LevelManager level(scr_width, scr_height);
+    //add Squishy to level
     level.addSquishy(s);
 
-    // uncomment this call to draw in wireframe polygons.
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
     //Game Loop
     double secsPerUpdate = 1.0 / 60.0;
     double previous = glfwGetTime();
@@ -91,10 +104,10 @@ int main()
     int frames = 0;
     int ticks = 0;
 
+    //set clearColour (its never seen, but just in case)
     glClearColor(0.2f, 0.4f, 0.65f, 1.0f);
     while (!glfwWindowShouldClose(window)) {
-        // input
-        // -----
+        //input for closing window
         processInput(window);
         
         double loopStartTime = glfwGetTime();
@@ -103,8 +116,7 @@ int main()
         steps += elapsed;
 
         while (steps >= secsPerUpdate) {
-            //DO UPDATES
-            //tick();
+            //UPDATE
             level.tick();
             mInput.tick();
 
@@ -118,10 +130,9 @@ int main()
         }
 
 
-        // Measure speed
+        //Measure speed
         frames++;
-        if (previous - lastTime >= 1.0) { // If last prinf() was more than 1 sec ago
-            // printf and reset timer
+        if (previous - lastTime >= 1.0) {
             std::cout<<frames << "- frames" << std::endl;
             std::cout << ticks << "- ticks" << std::endl;
             frames = 0;
@@ -129,7 +140,7 @@ int main()
             lastTime += 1.0;
         }
 
-        //DO RENDER
+        //RENDER
         f.bind();
         glClear(GL_COLOR_BUFFER_BIT);
         glEnable(GL_BLEND);
@@ -147,15 +158,13 @@ int main()
         sm.getShader("screenShader").use();
 
         f.draw();
-        //render.render(tex, pos, size, 0, colour);
         
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
+    //de-allocate all resources
     glDeleteVertexArrays(1, &texRender.quadVAO);
     glDeleteBuffers(1, &texRender.VBO);
     glDeleteBuffers(1, &texRender.EBO);
@@ -163,12 +172,12 @@ int main()
     glDeleteBuffers(1, &tileRender.VBO);
     glDeleteBuffers(1, &tileRender.EBO);
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
+    //glfw: terminate
     glfwTerminate();
     return 0;
 }
 
+//toggle fullscreen with ENTER
 void fullscreen() {
     if (fscreen) {
         glfwSetWindowMonitor(window, monitor, 0, 0, SCR_WIDTH, SCR_HEIGHT, GLFW_DONT_CARE);
@@ -183,33 +192,22 @@ void fullscreen() {
     projection = glm::ortho(0.f, scr_width, scr_height, 0.f, -1.0f, 1.0f);
 }
 
-void tick() {
-
-}
-
-void draw() {
-}
-
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
+//process any simple inputs, only used for closing the program at the moment
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
+//glfw: whenever the window size changed this function executes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
+    //make sure the viewport matches the new window dimensions
     glViewport(0, 0, width, height);
 }
 
 int init() {
-    // glfw: initialize and configure
-    // ------------------------------
+    //glfw: initialize and configure
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -219,11 +217,11 @@ int init() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // glfw window creation
-    // --------------------
+    //glfw: window creation
     window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
     monitor = glfwGetPrimaryMonitor();
 
+    //get the size of the monitor
     maxWidth = glfwGetVideoMode(monitor)->width; 
     maxHeight = glfwGetVideoMode(monitor)->height;
 
@@ -237,8 +235,7 @@ int init() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
+    //glad: load all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;

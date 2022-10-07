@@ -18,6 +18,7 @@ LevelManager::LevelManager(int scr_width, int scr_height) {
 const char* LevelManager::holdingObj = "";
 
 
+//update all entities in the level and mouse position
 void LevelManager::tick() {
 	mPos = mInput.mPos();
 	
@@ -48,6 +49,7 @@ void LevelManager::tick() {
 std::vector<Ball> LevelManager::balls;
 std::vector<Squishy> LevelManager::squishies;
 
+//render all items in the world, and UI objects
 void LevelManager::render(TextureRenderer r) {
 	if (CURRENT == main) {
 		for (int i = 0; i < squishies.size(); i++) {
@@ -62,6 +64,7 @@ void LevelManager::render(TextureRenderer r) {
 	}
 }
 
+//add objects and remove objects
 const void LevelManager::addBall(Ball b) {
 	balls.push_back(b);
 	std::cout << balls.size();

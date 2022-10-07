@@ -11,39 +11,41 @@
 #include <iostream>
 #include <map>
 
+//Shader class, creates a shader from a file, attaches it and links it
 class Shader
 {
 public:
     unsigned int ID;
-    // constructor generates the shader on the fly
-    // ------------------------------------------------------------------------
+
+    //default constructor defaults to general shader
     Shader() {
         Shader("res/vertex.vs", "res/frag.fs");
     }
 
+    //constructor generates the shader
     Shader(const char* vertexPath, const char* fragmentPath)
     {
-        // 1. retrieve the vertex/fragment source code from filePath
+        //retrieve the vertex/fragment code from the files
         std::string vertexCode;
         std::string fragmentCode;
         std::ifstream vShaderFile;
         std::ifstream fShaderFile;
-        // ensure ifstream objects can throw exceptions:
+        //ensure objects can throw exceptions:
         vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         try
         {
-            // open files
+            //open files
             vShaderFile.open(vertexPath);
             fShaderFile.open(fragmentPath);
             std::stringstream vShaderStream, fShaderStream;
-            // read file's buffer contents into streams
+            //read file's buffer contents into streams
             vShaderStream << vShaderFile.rdbuf();
             fShaderStream << fShaderFile.rdbuf();
-            // close file handlers
+            //close file handlers
             vShaderFile.close();
             fShaderFile.close();
-            // convert stream into string
+            //convert stream to string
             vertexCode = vShaderStream.str();
             fragmentCode = fShaderStream.str();
         }
@@ -53,30 +55,31 @@ public:
         }
         const char* vShaderCode = vertexCode.c_str();
         const char* fShaderCode = fragmentCode.c_str();
-        // 2. compile shaders
+
+        //compile shaders
         unsigned int vertex, fragment;
-        // vertex shader
+        //vertex shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
-        // fragment Shader
+        //fragment shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fShaderCode, NULL);
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
-        // shader Program
+        //shader program
         ID = glCreateProgram();
         glAttachShader(ID, vertex);
         glAttachShader(ID, fragment);
         glLinkProgram(ID);
         checkCompileErrors(ID, "PROGRAM");
-        // delete the shaders as they're linked into our program now and no longer necessary
+        //delete the shaders
         glDeleteShader(vertex);
         glDeleteShader(fragment);
     }
-    // activate the shader
-    // ------------------------------------------------------------------------
+
+    //use and unbind the shader
     void use()
     {
         glUseProgram(ID);
@@ -85,18 +88,17 @@ public:
         glUseProgram(0);
     }
 
-    // utility uniform functions
-    // ------------------------------------------------------------------------
+    //utility functions
     void setBool(const std::string& name, bool value) const
     {
         glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
     }
-    // ------------------------------------------------------------------------
+
     void setInt(const std::string& name, int value) const
     {
         glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
     }
-    // ------------------------------------------------------------------------
+
     void setFloat(const std::string& name, float value) const
     {
         glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
@@ -115,8 +117,7 @@ public:
     }
 
 private:
-    // utility function for checking shader compilation/linking errors.
-    // ------------------------------------------------------------------------
+    //utility function for checking shader errors.
     void checkCompileErrors(unsigned int shader, std::string type)
     {
         int success;
@@ -142,23 +143,27 @@ private:
     }
 };
 
+// static map of all shaders
 static std::map<std::string, Shader> shaders;
 
+//class to access / manage shaders
 class ShaderManager {
 
 
 public:
 
+    //default constructor
     ShaderManager() {
 
     }
 
-
+    //initialises a shader and adds it to the map of shaders
     Shader initShader(const char* name, const char* vertexPath, const char* fragmentPath) {
         shaders.insert({ name, Shader(vertexPath, fragmentPath) });
         return shaders.at(name);
     }
-
+    
+    //get shader from the map
     Shader getShader(const char* name) {
         return shaders.at(name);
     }

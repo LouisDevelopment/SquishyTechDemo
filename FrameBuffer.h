@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <iostream>
 
+//framebuffer class
 class FrameBuffer{
 
 private:
@@ -15,6 +16,7 @@ private:
 
 
 	unsigned int quadVAO, quadVBO;
+	//screen quad vertices
 	float quadVertices[24] = {
 		// positions   // texCoords
 		-1.0f,  1.0f,  0.0f, 1.0f,
@@ -28,12 +30,14 @@ private:
 
 public: 
 	
+	//constructor to build framebuffer
 	FrameBuffer(int width, int height) {
 		windowWidth = width;
 		windowHeight = height;
 		prepareScreen();
 		check();
 	}
+	//creates the framebuffer texture
 	void createTexture() {
 		glGenTextures(1, &tex);
 		glBindTexture(GL_TEXTURE_2D, tex);
@@ -46,11 +50,11 @@ public:
 
 
 	}
-
+	//attaches the texture
 	void attachTexture() {
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 	}
-
+	//creates the RBO
 	void createRBO() {
 		glGenRenderbuffers(1, &rbo);
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -58,19 +62,20 @@ public:
 
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	}
-
+	//attaches the RBO
 	void attachRBO() {
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 	}
-
+	//binds the framebuffer
 	void bind() {
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	}
-
+	//unbinds the frame buffer
 	void unbind() {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	//draws trhe framebuffer onto the screen
 	void draw() {
 		glActiveTexture(GL_TEXTURE0);
 		glBindVertexArray(quadVAO);
@@ -78,21 +83,25 @@ public:
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 
+	//deletes the framebuffer
 	void deleteFBO() {
 		glDeleteFramebuffers(1, &fbo);
 	}
 
+	//Check if the framebuffer is implemented correctly and unbind it
 	void check() {
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!";
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	//create the framebuffer
 	void createFBO() {
 		glGenFramebuffers(1, &fbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	}
 
+	//prepare the quad VAO and properly create/attach the things needed
 	void prepareScreen() {
 		// screen quad VAO
 		glGenVertexArrays(1, &quadVAO);

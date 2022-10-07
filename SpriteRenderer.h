@@ -11,6 +11,7 @@
 #include <iostream>
 #include <vector>
 
+//TileRenderer is not used in this version, the code is just copy/pasted from the texture renderer class
 class TileRenderer {
 
 	
@@ -87,12 +88,14 @@ public:
 
 };
 
+//Renders everything in this demo
 class TextureRenderer {
 
 public:
 
 
 	Texture tex;
+	//used an EBO for more efficient rendering
 	int indices[6] = {
 			0,1,3,1,2,3
 	};
@@ -100,12 +103,15 @@ public:
 	unsigned int quadVAO, triVAO, EBO, VBO;
 	unsigned int quadVAO2, triVAO2, EBO2, VBO2;
 
+	//holds a font
 	Font font;
 
+	//default constructor never used
 	TextureRenderer() {
 		shader = Shader();
 		TextureRenderer(shader);
 	}
+	//This constructor can be used, but isnt in this version
 	TextureRenderer(Shader s) {
 		shader = s;
 		initRenderData();
@@ -119,6 +125,7 @@ public:
 		initRenderData();
 	}
 	
+	//render a plain colour tile
 	void render(glm::vec2 pos, glm::vec2 size, float rotate, glm::vec3 colour) {
 		shader.use();
 
@@ -148,6 +155,7 @@ public:
 
 	}
 
+	//render a colour tile with alpha
 	void render(glm::vec2 pos, glm::vec2 size, float rotate, glm::vec3 colour, float alpha) {
 		shader.use();
 
@@ -177,6 +185,7 @@ public:
 
 	}
 
+	//render a texture
 	void render(Texture tex, glm::vec2 pos, glm::vec2 size, float rotate, glm::vec3 colour) {
 		shader.use();
 
@@ -206,6 +215,7 @@ public:
 
 	}
 
+	//render a texture with alpha
 	void render(Texture tex, glm::vec2 pos, glm::vec2 size, float rotate, glm::vec3 colour, float alpha) {
 		shader.use();
 
@@ -235,10 +245,12 @@ public:
 
 	}
 
+	//render text
 	void renderText(const char* text, glm::vec2 pos, float scale, float rotate, glm::vec3 colour) {
 		font.renderText(text, pos.x, pos.y, scale, colour);
 	}
 
+	//renders a shape using a list of vertices and a center point
 	void renderShape(glm::vec2* points, glm::vec2 center, int totalPoints, glm::vec3 colour, float alpha, bool fill) {
 		
 		shader.use();
@@ -249,6 +261,7 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		tex.bind(); 
 		for (int i = 0; i < totalPoints; i++) {
+			//gets the distance between adjacent points (Distance formula was used at first, but this was running more efficiently, I may go back to distance formula)
 			int dist = 0;
 			if (points[i].x > points[(i + 1) % totalPoints].x) {
 				if (points[i].y > points[(i + 1) % totalPoints].y) {
@@ -266,9 +279,12 @@ public:
 					dist = (points[(i + 1) % totalPoints].x - points[i].x) + (points[(i + 1) % totalPoints].y - points[i].y);
 				}
 			}
+			//gets the distance from a point to the center of the shape
 			int width = glm::sqrt(glm::pow(points[i].x-center.x, 2) + glm::pow(points[i].y - center.y, 2))*2;
+			//gets the angle to draw each portion of the shape at
 			float angle = atan2(points[i].y - center.y, points[i].x - center.x) * glm::radians(180.f) / glm::pi<float>();
 
+			//draw squishy (Doesn't draw certain points because squishy is not a perfect circle, and the excluded points were unnecessary)
 			if (i < totalPoints/4*3-1 || i > totalPoints/4*3+1) {
 				glm::mat4 model = glm::mat4(1.0f);
 				model = glm::translate(model, glm::vec3(points[i].x, points[i].y, 0.0f));
@@ -289,6 +305,7 @@ public:
 		shader.unbind();
 	}
 
+	//render a shape the same as before, but with an offset.
 	void renderShape(glm::vec2* points, glm::vec2 offset, int totalPoints, glm::vec3 colour, float alpha, float scale, bool fill) {
 		int width = -1;
 		for (int i = 0; i < totalPoints; i++) {
@@ -346,7 +363,9 @@ public:
 		shader.unbind();
 	}
 
+	//init the renderer
 	void initRenderData() {
+		//vertex coords
 		float vertices[] = {
 				0.0f, 1.0f,
 				0.0f, 0.0f,
@@ -354,6 +373,7 @@ public:
 				1.0f, 1.0f
 		};
 
+		//texture coords
 		float tex[] = {
 			0, 1,
 			0, 0,

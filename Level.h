@@ -6,13 +6,16 @@
 #include "Input.h"
 #include <glm/gtc/random.hpp>
 
+//Levelmanager handles all things on the game screen (in this tech demo at least)
 extern class LevelManager {
 
 public:
+	//only 1 state, the main game. In the version I am actively working on there is also a menu and the park
 	enum state {
 		main
 	};
 
+	//list of all balls and squishies in the scene (future versions allow for interaction between 2 or more squishies)
 	static std::vector<Ball> balls;
 	static std::vector<Squishy> squishies;
 

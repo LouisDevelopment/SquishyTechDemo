@@ -1,13 +1,14 @@
 #include "Item.h"
 #include "Level.h"
 
-
+//ball item default constructor (never used)
 Ball::Ball() {
     pos = glm::vec2(10000, 10000);
     size = glm::vec2(64, 64);
     vel = glm::vec2(0, 0);
 }
 
+//main constructor, sets random colour
 Ball::Ball(Texture tex, glm::vec2 pos) {
     this->pos = pos;
     this->tex = tex;
@@ -19,6 +20,7 @@ Ball::Ball(Texture tex, glm::vec2 pos) {
     vel = glm::vec2(0, 0);
 }
 
+//update for it the ball is colliding with a wall
 void Ball::tick() {
     if (pos.y < Squishy::floorHeight+48) {
         if (!(mInput.mouseOver(pos.x - size.x / 2, pos.y - size.y / 2, size.x, size.y) && mInput.buttonPressed(0))) {
@@ -49,6 +51,7 @@ void Ball::tick() {
     updatePos();
 }
 
+//maths for throwing balls
 void Ball::updatePos() {
 
     prevPos.x = pos.x;
@@ -96,7 +99,7 @@ void Ball::updatePos() {
     }
 }
 
-
+//render
 void Ball::render(TextureRenderer r) {
     r.render(tex, glm::vec2(pos.x - size.x / 2, pos.y - size.y / 2), size, 0, glm::vec3(this->r, g, b), 1);
 }

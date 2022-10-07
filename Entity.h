@@ -7,6 +7,7 @@
 #include "Item.h"
 #include "FrameBuffer.h"
 
+//Parent entity class (not really used in this techdemo)
 class Entity {
 public:
     glm::vec2 pos;
@@ -21,7 +22,7 @@ public:
 };
 
 
-
+//Represents each vertex of a Squishy object
 class SquishyPoint {
 
 public:
@@ -32,13 +33,13 @@ public:
 
     SquishyPoint(glm::vec2);
 
+    //update x and y seperately as the acceleration in each direction is different
     void updateX(float);
     void updateY(float);
 
 };
 
-class Ball;
-
+//Squishy class, handles all changes to squishy and each of its vertices
 class Squishy : public Entity {
 
 private:
@@ -49,6 +50,7 @@ private:
 
 public:
 
+    //stores the floor height as it is used most often in this class
     static const int floorHeight = 460;
     glm::vec2 vel, center;
     int totalPoints, heldBallID=-1;
@@ -64,9 +66,10 @@ public:
     Squishy(glm::vec2, glm::vec2, int, MouseInput, int);
 
     void tick();
-    void updateVel();
 
+    void updateVel();
     void updatePos();
+    
     void render(TextureRenderer);
 };
 

@@ -6,6 +6,7 @@
 #include "stb_image.h"
 #include <map>
 
+//texture class
 class Texture {
 
 	unsigned int texture = 0;
@@ -31,20 +32,24 @@ private:
 
 };
 
-static std::map<std::string, Texture> textures;
 
+//manages all textures
 class TextureManager {
 
 
+	//map to store all textures
 	static std::map<std::string, Texture> textures;
 public:
 
 	TextureManager();
 
+	//add texture to map
 	static Texture initTex(const char* path, const char* name, bool alpha) {
 		textures.insert(std::pair<const char*, Texture>( name, Texture(path, name, alpha) ));
 		return textures.at(name);
 	}
+
+	//get texture from map
 	static Texture getTex(const char* name) {
 		if (textures.count(name) > 0) {
 			return textures.at(name);

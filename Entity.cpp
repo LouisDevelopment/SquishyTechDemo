@@ -1,16 +1,22 @@
 #include "Entity.h"
 #include "Level.h"
 
+//default squishy point
 SquishyPoint::SquishyPoint() {
     vel = glm::vec2(0, 0);
+    pos = glm::vec2(0, 0);
+    nextPos = pos;
 }
 
+//Squishy point with a position (this constructor is used in this test demo)
 SquishyPoint::SquishyPoint(glm::vec2 pos) {
     this->pos = pos;
     nextPos = pos;
     vel = glm::vec2(0, 0);
 }
 
+
+//update X and Y seperately
 void SquishyPoint::updateX(float k) {
     float x = nextPos.x - pos.x;
     float acceleration = -k * x;
@@ -28,15 +34,24 @@ void SquishyPoint::updateY(float k) {
 
 }
 
+//Squishy constructor, takes in the position and size, as well as how many vertices he will be made up of, mouseInput, and an ID
 Squishy::Squishy(glm::vec2 pos, glm::vec2 size, int numOfRigidPoints, MouseInput m, int id) {
     totalPoints = numOfRigidPoints;
 
     SquishyPoint* rigidPoints = new SquishyPoint[totalPoints];
 
+    //Generates the rigidpoints 
     for (int i = 0; i < numOfRigidPoints; i++) {
-        float angle = glm::radians((360.f / numOfRigidPoints) * i);
-        rigidPoints[i] = SquishyPoint(glm::vec2((glm::cos(angle) * (size.x / 2)+ glm::sin(angle)*8) + pos.x, glm::sin(angle) * (size.y / 2) + pos.y));
+        float angle = glm::radians((360.f / numOfRigidPoints) * i);if (i >= totalPoints / 4*3) {
+            rigidPoints[i] = SquishyPoint(glm::vec2((glm::cos(angle) * (size.x / 2) + glm::sin(angle) * 16) + pos.x, glm::sin(angle) * (size.y / 2) + pos.y));
+        } else if (i >= totalPoints / 2 && i < totalPoints/4*3) {
+            rigidPoints[i] = SquishyPoint(glm::vec2((glm::cos(angle) * (size.x / 2) - glm::sin(angle) * 16) + pos.x, glm::sin(angle) * (size.y / 2) + pos.y));
+        }
+        else {
+            rigidPoints[i] = SquishyPoint(glm::vec2((glm::cos(angle) * (size.x / 2)) + pos.x, glm::sin(angle) * (size.y / 2) + pos.y));
+        }
     }
+    //sets class variables
     this->m = m;
     this->rigidPoints = rigidPoints;
     this->size = size;
@@ -45,13 +60,16 @@ Squishy::Squishy(glm::vec2 pos, glm::vec2 size, int numOfRigidPoints, MouseInput
     this->pos = pos;
 }
 
+//tick
 void Squishy::tick() {
+    //previous position = current position before updates
     prevPos.x = pos.x;
     prevPos.y = pos.y;
-    Entity::tick();
+    //if not held, apply gravity
     if (!(m.mouseOver(pos.x - size.x / 2, pos.y - size.y / 2, size.x, size.y) && m.buttonPressed(0) && LevelManager::holdingObj != "ball")) {
         vel.y += 0.4f;
     }
+    //make sure squishy is within the bounds of the window
     if (pos.y < size.y / 2) {
         pos.y = size.y / 2;
     }
@@ -65,6 +83,7 @@ void Squishy::tick() {
         pos.x = size.x / 2;
     }
 
+    //if there are balls in the scene, squishy chases one, once hes on top of it he picks it up
     if (LevelManager::balls.size() > 0) {
         int closestBallx = 10000, closestBally = 10000;
         int tempIndex;
@@ -130,14 +149,15 @@ void Squishy::tick() {
         }
     }
 
-
+    //update soft-body
     updateVel();
     updatePos();
 
-
+    //set the center point of squishy (not necessarily just pos)
     center = glm::vec2(rigidPoints[0].nextPos.x - size.x / 2, rigidPoints[0].nextPos.y);
 }
 
+//update the velocity of each point
 void Squishy::updateVel() {
     for (int i = 0; i < totalPoints; i++) {
         float angle = glm::radians((360.f / totalPoints) * i);
@@ -156,6 +176,7 @@ void Squishy::updateVel() {
     }
 }
 
+//update the position of each point
 void Squishy::updatePos() {
     for (int j = 0; j <10; j++) {
         for (int i = 0; i < totalPoints; i++) {
@@ -187,6 +208,7 @@ void Squishy::updatePos() {
 
     }
 
+    //if held, squishy follows the cursor
     if (m.mouseOver(pos.x - size.x / 2, pos.y - size.y / 2, size.x, size.y) && m.buttonPressed(0) && LevelManager::holdingObj != "ball" && LevelManager::holdingObj != "squishy" || tracking) {
         tracking = true;
         glm::vec2 mPos = m.mPos();
@@ -196,6 +218,7 @@ void Squishy::updatePos() {
             LevelManager::holdingObj = "squishy";
         }
     }
+    //if the player lets go of squishy no longer track him to the cursor
     if (m.buttonReleased(0) && tracking) {
         tracking = false;
         LevelManager::holdingObj = "";
@@ -203,6 +226,7 @@ void Squishy::updatePos() {
         vel.y = (pos.y - prevPos.y) * 0.6f;
 
     }
+    //reduce his velocity each update, and if the velocity is neglegable then set it to 0
     vel.x *= 0.88f;
 
     if (vel.x < 0.002f && vel.x > -0.002f) {
@@ -213,6 +237,7 @@ void Squishy::updatePos() {
         vel.y = 0;
     }
 
+    //bounce off of walls / floor
     if (pos.y + vel.y <= floorHeight && pos.y + vel.y >= size.y / 2) {
         pos.y += vel.y;
     }
@@ -232,6 +257,7 @@ void Squishy::updatePos() {
     
 }
 
+//render every aspect of squishy seperately
 void Squishy::render(TextureRenderer r) {
 
     Entity::render(r);
@@ -239,7 +265,7 @@ void Squishy::render(TextureRenderer r) {
     stomach = new glm::vec2[totalPoints / 2];
     offset = pos;
     for (int i = 0; i < totalPoints; i++) {
-        //r.render(tex, Vec2f(x - width / 2, y - height / 2), Vec2f(width, height), 0, Vec3f(1.f, 1.f, 1.f));
+        //turn squishy points into vec2's
         shape[i] = glm::vec2(rigidPoints[i].nextPos.x, rigidPoints[i].nextPos.y);
         if (i < totalPoints / 2) {
             stomach[i] = glm::vec2((rigidPoints[i * 2].nextPos.x - pos.x), rigidPoints[i * 2].nextPos.y - pos.y + (rigidPoints[totalPoints / 4].nextPos.y - pos.y));
